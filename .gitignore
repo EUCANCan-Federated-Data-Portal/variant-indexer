@@ -1,0 +1,8 @@
+*.log
+
+.env
+
+.nyc_output/*
+.vscode/*
+dist/*
+node_modules/*

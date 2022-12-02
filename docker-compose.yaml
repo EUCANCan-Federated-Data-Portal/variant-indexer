@@ -1,0 +1,101 @@
+version: '3.8'
+
+volumes:
+  indexer_pg_data:
+    name: indexer_pg_vol
+    driver: local
+  indexer_es_data:
+    name: indexer_es_vol
+    driver: local
+
+services:
+
+  ##########################
+  ####    Indexer DB    ####
+  ##########################
+  indexer_postgres:
+    container_name: indexer_pg
+    image: postgres:15-alpine
+    restart: always
+    volumes:
+      - indexer_pg_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=indexer
+      - POSTGRES_PASSWORD=password
+    expose:
+      - 5432
+    ports:
+      - 8432:5432
+
+  ######################################
+  ####    Elasticsearch Services    ####
+  ######################################
+
+  elasticsearch:
+    container_name: indexer_es
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.7
+    ports:
+      - 9200:9200
+    volumes:
+      - indexer_es_data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - cluster.name=indexer.elasticsearch
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx2048m'
+      - path.repo=/usr/share/elasticsearch
+  
+  # Add Kibana Here if desired
+
+  # Rollcall is an Overture service responsible for creating versioned indices and releasing them to aliases
+  rollcall:
+    container_name: indexer_rollcall
+    image: overture/rollcall:2.7.0
+    depends_on:
+      - elasticsearch
+    ports:
+      - '9001:9001'
+    environment:
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+      SPRING_PROFILES_ACTIVE: test
+      SERVER_PORT: 9001
+      ROLLCALL_ALIASES_0_ALIAS: variant_centric
+      ROLLCALL_ALIASES_0_ENTITY: variant
+      ROLLCALL_ALIASES_0_TYPE: centric
+      ROLLCALL_ALIASES_0_RELEASEROTATION: 0
+  
+  #####################
+  ####    Kafka    ####
+  #####################
+  zookeeper:
+    container_name: indexer_zookeeper
+    image: confluentinc/cp-zookeeper:7.2.1
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    container_name: indexer_broker
+    image: confluentinc/cp-server:7.2.1
+    hostname: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - '29092:29092'
+      - '9101:9101'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka.fs.dev:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka.fs.dev:29092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kafka:/kafka
+
