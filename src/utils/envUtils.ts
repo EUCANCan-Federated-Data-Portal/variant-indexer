@@ -100,7 +100,7 @@ function envBuilder(key: string, description?: string) {
 
 	const required = () => {
 		const value = process.env[key];
-		if (value === undefined) {
+		if (value === undefined || value === '') {
 			throw new EnvError({ error: 'Value is required', description, key, value });
 		}
 		return requiredEnvBuilder({ key, value, description });

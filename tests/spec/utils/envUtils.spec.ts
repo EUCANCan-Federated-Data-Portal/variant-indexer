@@ -94,6 +94,13 @@ describe('Environment Utils', () => {
 		expect(() => env('MISSING').required().matches('')).to.throw();
 	});
 
+	it('should throw an error when required but value is empty', () => {
+		expect(() => env('EMPTY').required().boolean()).to.throw();
+		expect(() => env('EMPTY').required().number()).to.throw();
+		expect(() => env('EMPTY').required().string()).to.throw();
+		expect(() => env('EMPTY').required().matches('')).to.throw();
+	});
+
 	describe('options', () => {
 		it('should return successfully if value is in options', () => {
 			const bool = env('FALSE').options(['false']).boolean(true);
