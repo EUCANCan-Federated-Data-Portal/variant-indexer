@@ -17,35 +17,67 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import npmPackage from '../package.json';
+import { KafkaConsumerConfiguration } from './external/kafka/types';
 import env from './utils/envUtils';
 
+const songConsumer: KafkaConsumerConfiguration = {
+	topic: env('KAFKA_TOPIC_SONG').string('song_analysis'),
+	group: env('KAFKA_CONSUMER_SONG_GROUP').string('song_analysis'),
+	dlq: env('KAFKA_CONSUMER_SONG_DLQ').boolean(true),
+
+	// If heartbeat is provided, it is required to be a number, otherwise it will be undefined.
+	heartbeatInterval: process.env.KAFKA_CONSUMER_SONG_HEARTBEAT_INTERVAL
+		? env('KAFKA_CONSUMER_SONG_HEARTBEAT_INTERVAL').required().number()
+		: undefined,
+};
+
+const isProduction = env('NODE_ENV').matches('production');
+const isTest = env('TEST_MODE').boolean(false);
 const config = {
 	env: {
-		isProduction: env('NODE_ENV').matches('production'),
-		isTest: env('NODE_ENV').matches('test'),
+		isProduction,
+		isTest,
+		isDev: !(isTest || isProduction),
 		version: env('BUILD_VERSION').string(npmPackage.version),
 	},
 	auth: {
 		ego: {
 			host: env('EGO_HOST', 'URL for Ego Auth API ex. http://ego.ui').required().string(),
-			// credentials: {
-			// 	id: env('EGO_CLIENT_ID').required().string(),
-			// 	secret: env('EGO_CLIENT_SECRET').required().string(),
-			// },
+			credentials: {
+				id: env('EGO_CLIENT_ID').required().string(),
+				secret: env('EGO_CLIENT_SECRET').required().string(),
+			},
 		},
 	},
-	// db: {
-	// 	host: env('PG_HOST').required().string(),
-	// 	port: env('PG_PORT').required().number(),
-	// 	user: env('PG_USER').required().string(),
-	// 	pass: env('PASS').required().string(),
-	// 	db: env('PG_DB').required().string(),
-	// },
+	db: {
+		host: env('PG_HOST').required().string(),
+		port: env('PG_PORT').required().number(),
+		user: env('PG_USER').required().string(),
+		pass: env('PG_PASS').required().string(),
+		db: env('PG_DB').required().string(),
+	},
+	es: {
+		host: '',
+		user: '',
+		pass: '',
+	},
 	logs: {
 		level: env('LOG_LEVEL').options(['debug', 'info', 'warning', 'error']).string('info'), // log level used in deployed app
+	},
+	kafka: {
+		brokers: [env('KAFKA_BROKER').required().string()] as string[],
+		clientId: env('KAFKA_CLIENT_ID').string('indexer'),
+		namespace: env('KAFKA_NAMESPACE').string('indexer'),
+		consumers: {
+			song: songConsumer,
+		},
+		producers: {
+			indexing: { topic: env('KAFKA_INDEXING_TOPIC') },
+		},
 	},
 	server: {
 		port: env('SERVER_PORT').number(3344),
 	},
-};
+} as const;
+
 export default config;
