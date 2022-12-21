@@ -8,8 +8,8 @@
 		"start": "node dist/index.js",
 		"migrate": "ley --require tsm --driver pg",
 		"build": "rm -rf dist && tsc",
-		"test": "TEST_MODE=true mocha --require ts-node/register tests/**/*.spec.ts --exit",
-		"test:coverage": "TEST_MODE=test nyc mocha --require ts-node/register tests/**/*.spec.ts --exit"
+		"test": "TEST_MODE=true mocha",
+		"test:coverage": "TEST_MODE=true nyc mocha"
 	},
 	"author": "Ontario Institute for Cancer Research",
 	"license": "GPL-3.0",
