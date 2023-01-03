@@ -31,15 +31,18 @@ let server: Express;
 
 const createServer = async (): Promise<Express> => {
 	server = express();
-	server.use(requestLogging(logger));
 	server.use(express.json());
+
+	server.use(requestLogging(logger));
 
 	/**
 	 * PING!
 	 * Root path should return 200 OK
 	 */
 	server.get('/', (_req, res) => {
-		res.status(200).send();
+		res.status(200).json({
+			swagger: { v1: '/v1/api-docs' },
+		});
 	});
 
 	// Add v1 Router
