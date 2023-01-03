@@ -4,7 +4,7 @@ import chaiHttp from 'chai-http';
 
 import type { Express } from 'express';
 
-import getServer from '../../../src/server';
+import getServer from '../../../../src/server';
 
 chai.use(chaiHttp);
 let server: Express | undefined;
@@ -14,7 +14,7 @@ describe('Route - Status', () => {
 		server = await getServer();
 	});
 
-	it('get /status - returns 200 with status data', (done) => {
+	it('get /v1/status - returns 200 with status data', (done) => {
 		chai
 			.request(server)
 			.get('/v1/status')

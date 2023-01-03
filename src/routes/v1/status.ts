@@ -19,13 +19,29 @@
 
 import { Router } from 'express';
 import config from '../../config';
-
+/**
+ * @openapi
+ * tags:
+ *   - name: Status
+ *     description: Server status and health check
+ */
 const router = Router();
 
 const startTime = new Date();
 
 /**
  * Respond with 200OK and some server status information.
+ *
+ * @openapi
+ * /v1/status:
+ *   get:
+ *     tags:
+ *       - Status
+ *     name: Health Check
+ *     description: Ping!
+ *     responses:
+ *       200:
+ *         description: Respond 200 OK
  */
 router.get('/', (_req, res) => {
 	return res.json({
