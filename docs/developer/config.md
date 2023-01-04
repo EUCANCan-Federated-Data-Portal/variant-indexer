@@ -19,7 +19,7 @@ cp .env.template .env
 
 ## Env Variables
 
-> **Note**: When a default value is provided on a required field, this represents the default provided by the template. If you omit this value in your `.env` file the application will not run. Default values in optional fields are provided by the application code in [`src/config.ts`](../../src/config.ts).
+> **Note**: When a default value is listed here for a required field, this represents the default provided by the template. If you omit this value in your `.env` file the application will not run. Default values in optional fields are provided by the application code in [`src/config.ts`](../../src/config.ts).
 >
 > This document is a guide and is not guaranteed to match 100% the content of `.env.template` or the `src/config.ts`. Always check those files in case of a discrepency (and please open a PR to correct any mismatches).
 
@@ -36,7 +36,7 @@ cp .env.template .env
 | KAFKA_TOPIC_SONG                       | Optional | string                              |  `song_analysis` | Topic name that song will deliver messages to about new Analyses and updates to analysis states. Default value matches the Song default topic name.                                                               |
 | KAFKA_CONSUMER_SONG_GROUP              | Optional | string                              |  `song_analysis` | Identifier for the consumer group name that will read from the `KAFKA_TOPIC_SONG`. The consumer group will be prefixed with the `KAFKA_NAMESPACE`.                                                                |
 | KAFKA_CONSUMER_SONG_DLQ                | Optional | boolean                             |           `true` | Whether or not to send failed reads from the `KAFKA_TOPIC_SONG` to a DLQ for future processing.                                                                                                                   |
-| KAFKA_CONSUMER_SONG_HEARTBEAT_INTERVAL | Optional | number                              |                - | If set, overrides the default kafka heartbeat duration (3s) for the `KAFKA_TOPIC_SONG` topic consumer.                                                                                                            |
+| KAFKA_CONSUMER_SONG_HEARTBEAT | Optional | number                              |                - | If set, overrides the default kafka heartbeat duration (3s) for the `KAFKA_TOPIC_SONG` topic consumer.                                                                                                            |
 |                                        |          |                                     |                  |                                                                                                                                                                                                                   |
 | PG_HOST                                | Required | string                              |      `localhost` | Hostname for the PostgresDB                                                                                                                                                                                       |
 | PG_PORT                                | Required | number                              |           `8432` | Port to connect to PostgresDB on the `PG_HOST`                                                                                                                                                                    |

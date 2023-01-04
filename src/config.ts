@@ -26,8 +26,8 @@ const songConsumer: KafkaConsumerConfiguration = {
 	dlq: env('KAFKA_CONSUMER_SONG_DLQ').boolean(true),
 
 	// If heartbeat is provided, it is required to be a number, otherwise it will be undefined.
-	heartbeatInterval: process.env.KAFKA_CONSUMER_SONG_HEARTBEAT_INTERVAL
-		? env('KAFKA_CONSUMER_SONG_HEARTBEAT_INTERVAL').required().number()
+	heartbeatInterval: process.env.KAFKA_CONSUMER_SONG_HEARTBEAT
+		? env('KAFKA_CONSUMER_SONG_HEARTBEAT').required().number()
 		: undefined,
 };
 
