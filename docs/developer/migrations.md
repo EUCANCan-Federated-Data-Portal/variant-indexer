@@ -2,7 +2,7 @@
 
 Migrations are managed with [ley](https://www.npmjs.com/package/ley)
 
-## Create New Migrations
+## Create New Migration
 
 ```
 npm run migrate new <short_migration_description>.ts
