@@ -37,7 +37,7 @@ export type Result<T> = Success<T> | Failure;
 
 /* ###################
    Convenience Methods 
-	 ################### */
+   ################### */
 
 /**
  * Create a successful response for a Result or Either type, with data of the success type
