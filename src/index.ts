@@ -17,10 +17,11 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import startServer from './server';
 import Logger from './logger';
 import config from './config';
 import getServer from './server';
+import * as kafka from './external/kafka';
+import * as ego from './external/ego';
 
 const logger = Logger('Main');
 
@@ -29,11 +30,25 @@ const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 
 (async () => {
 	/*
+		INITIALIZE EXTERNAL DEPENDENCIES
+		- kafka
+		- ego
+	 */
+
+	// Not waiting for kafka, it is slow to start. It will throw errors if connections fail.
+	kafka.setup();
+
+	await ego.getEgoToken();
+
+	/*
 		START EXPRESS WEB SERVER
 	 */
 	const server = await getServer();
 	server.listen(config.server.port, () => {
 		logger.info(`Web server started, listening on`, config.server.port);
+		if (config.env.isDev) {
+			logger.info(`Swagger is available at http://localhost:${config.server.port}/v1/api-docs`);
+		}
 	});
 })();
 
@@ -45,6 +60,7 @@ errorTypes.map((type) => {
 			console.log(e);
 
 			// Terminate any connections, as required
+			await kafka.disconnect();
 
 			process.exit(0);
 		} catch (_) {
@@ -57,6 +73,7 @@ signalTraps.map((type) => {
 	process.once(type as any, async () => {
 		try {
 			// Terminate any connections, as required
+			await kafka.disconnect();
 		} finally {
 			process.kill(process.pid, type);
 		}
