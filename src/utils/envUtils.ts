@@ -36,6 +36,7 @@ export class EnvError extends Error {
 	}
 }
 
+// TODO: JSDoc
 function requiredEnvBuilder(props: { key: string; value: string; description?: string }) {
 	let { key, description, value } = props;
 
@@ -75,7 +76,7 @@ function requiredEnvBuilder(props: { key: string; value: string; description?: s
 
 	/**
 	 * Returns true if the env value matches the given string,
-	 * @param expected
+	 * @param {string} expected
 	 * @returns
 	 */
 	function matches(expected: string): boolean {
@@ -95,6 +96,7 @@ function requiredEnvBuilder(props: { key: string; value: string; description?: s
 	return _this();
 }
 
+// TODO: JSDoc
 function envBuilder(key: string, description?: string) {
 	const value = process.env[key];
 
@@ -149,8 +151,8 @@ function envBuilder(key: string, description?: string) {
 
 	/**
 	 * Returns true if the env value matches the given string
-	 * @param expected
-	 * @returns
+	 * @param {string} [expected]
+	 * @returns {boolean}
 	 */
 	function matches(expected?: string): boolean {
 		return expected === process.env[key];

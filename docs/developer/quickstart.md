@@ -3,9 +3,9 @@
 ## Running with docker-compose
 1. `npm ci` - Install node dependencies from npm
    
-2. `cp .env.template .env` - Create `.env` file
+2. `cp .env.template .env` - Create `.env` file from template
   
-	Copy `.env.template` file into a new file `.env` in the root directory of this project. The template has all default values needed to run this application connected to the containers as defined in the docker-compose file.
+	See [config docs](./config.md) for more information on environment variable config. Copy `.env.template` file into a new file `.env` in the root directory of this project. The template has all default values needed to run this application connected to the containers as defined in the docker-compose file.
 
 3. `docker-compose up -d` - Run docker compose
 
