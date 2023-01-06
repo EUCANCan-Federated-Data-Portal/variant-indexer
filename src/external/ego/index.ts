@@ -20,17 +20,17 @@ import { z as zod } from 'zod';
 import querystring from 'querystring';
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch-commonjs';
-import path from 'path';
 import config from '../../config';
 import Logger from '../../logger';
 import { failure, Result, success } from '../../types/Result';
+import { appendQueryParams, createUrl } from '../../utils/urlUtils';
 
 const logger = Logger('Ego');
 
 export const urls = {
-	applicationAuth: path.join(config.auth.ego.host, '/oauth/token'),
-	checkApiKey: path.join(config.auth.ego.host, '/o/check_api_key'),
-	publicKey: path.join(config.auth.ego.host, '/oauth/token/public_key'),
+	applicationAuth: createUrl(config.auth.ego.host, '/oauth/token'),
+	checkApiKey: createUrl(config.auth.ego.host, '/o/check_api_key'),
+	publicKey: createUrl(config.auth.ego.host, '/oauth/token/public_key'),
 };
 
 export type EgoApplicationCredential = {
@@ -56,7 +56,7 @@ const getApplicationJwt = async (appCredentials: EgoApplicationCredential): Prom
 	const queryParams = {
 		grant_type: 'client_credentials',
 	};
-	const url = urls.applicationAuth + '?' + querystring.stringify(queryParams);
+	const url = appendQueryParams(urls.applicationAuth, queryParams);
 
 	const bodyContent = { client_id: appCredentials.clientId, client_secret: appCredentials.clientSecret };
 	const body = Object.entries(bodyContent)
