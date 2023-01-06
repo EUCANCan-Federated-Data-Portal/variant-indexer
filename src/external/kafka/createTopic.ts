@@ -28,9 +28,9 @@ const createTopic = async (kafka: Kafka, config: KafkaTopicConfiguration) => {
 		if (isTopicCreated) {
 			logger.info(topic, 'Successfully created topic');
 		}
-	} catch (e) {
-		logger.error(topic, 'Error while creating topic', e);
-		throw e;
+	} catch (error) {
+		logger.error(topic, 'Error while creating topic', error);
+		throw error;
 	}
 };
 

@@ -97,8 +97,8 @@ function createConsumer<T>(
 	async function handleMessage(message: KafkaMessage) {
 		try {
 			await messageHandler(parser(message));
-		} catch (err) {
-			logger.error(`Error processing offset: ${message.offset}`, err);
+		} catch (error) {
+			logger.error(`Error processing offset: ${message.offset}`, error);
 
 			const msg = message.value
 				? JSON.parse(message.value.toString())
