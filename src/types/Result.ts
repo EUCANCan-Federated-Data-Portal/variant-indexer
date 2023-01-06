@@ -17,7 +17,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* *** Result Type(s) *** */
+import { unknownToString } from '../utils/stringUtils';
+
+/* ===== Result Type(s) ===== */
 // Success and Failure objects
 export type Success<T> = { success: true; data: T };
 export type Failure = { success: false; message: string };
@@ -35,9 +37,9 @@ export type Either<A, B> = Success<A> | Fallback<B>;
  */
 export type Result<T> = Success<T> | Failure;
 
-/* ###################
+/* ******************* *
    Convenience Methods 
-   ################### */
+ * ******************* */
 
 /**
  * Create a successful response for a Result or Either type, with data of the success type
@@ -58,4 +60,7 @@ export const fallback = <T>(data: T, message: string): Fallback<T> => ({ success
  * @param {string} message
  * @returns {Failure} `{success: true, message}`
  */
-export const failure = (message: string): Failure => ({ success: false, message });
+export const failure = (...message: (string | number | boolean | object | unknown)[]): Failure => ({
+	success: false,
+	message: message.map(unknownToString).join(' - '),
+});
