@@ -33,3 +33,9 @@ For Example, in [status.ts](../../src/routes/v1/status.ts):
 ```
 
 The library providing this functionality is [swagger-jsdoc](https://www.npmjs.com/package/swagger-jsdoc).
+
+## Adding A New Router File
+
+Each router file that has Swagger Docs needs to be added to the config of the [Swagger Router](../../src/routes/v1/swagger.ts), in the property `apis` . 
+
+The entire directory of `./src/routes/*` has been included, so if the file is defined there no action is needed to get the JSDocs added to the swagger page. You may need to add your file to this config if it is stored in a different path.
