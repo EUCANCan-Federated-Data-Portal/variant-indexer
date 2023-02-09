@@ -22,7 +22,7 @@
  * @param input
  * @returns
  */
-export const unknownToString = (input: unknown): string => {
+export function unknownToString(input: unknown): string {
 	if (input instanceof Error) {
 		return input.message;
 	} else if (typeof input === 'object') {
@@ -30,4 +30,4 @@ export const unknownToString = (input: unknown): string => {
 	} else {
 		return `${input}`;
 	}
-};
+}
