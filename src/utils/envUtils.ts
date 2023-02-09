@@ -37,7 +37,7 @@ export class EnvError extends Error {
 }
 
 // TODO: JSDoc
-function requiredEnvBuilder(props: { key: string; value: string; description?: string }) {
+function requiredValueValidator(props: { key: string; value: string; description?: string }) {
 	let { key, description, value } = props;
 
 	const options = (options: string[]) => {
@@ -54,7 +54,7 @@ function requiredEnvBuilder(props: { key: string; value: string; description?: s
 			case 'false':
 				return false;
 			default:
-				throw new EnvError({ error: 'Provided value cannot be parsed as a boolean', key, value: process.env[key] });
+				throw new EnvError({ error: 'Provided value cannot be parsed as a boolean', key, value });
 		}
 	};
 
@@ -80,8 +80,7 @@ function requiredEnvBuilder(props: { key: string; value: string; description?: s
 	 * @returns
 	 */
 	function matches(expected: string): boolean {
-		const value = process.env[key];
-		return expected === process.env[key];
+		return expected === value;
 	}
 
 	const _this = () => ({
@@ -97,20 +96,16 @@ function requiredEnvBuilder(props: { key: string; value: string; description?: s
 }
 
 // TODO: JSDoc
-function envBuilder(key: string, description?: string) {
-	const value = process.env[key];
-
+function valueValidator(props: { key: string; value: string | undefined; description?: string }) {
+	const { key, value, description } = props;
 	const required = () => {
-		const value = process.env[key];
 		if (value === undefined || value === '') {
 			throw new EnvError({ error: 'Value is required', description, key, value });
 		}
-		return requiredEnvBuilder({ key, value, description });
+		return requiredValueValidator({ key, value, description });
 	};
 
 	const options = (options: string[]) => {
-		const value = process.env[key];
-
 		// undefined must be added to options list the value could be optional
 		const optionsWithUndefined = [...options, undefined];
 		if (!optionsWithUndefined.includes(value)) {
@@ -120,7 +115,6 @@ function envBuilder(key: string, description?: string) {
 	};
 
 	const boolean = (defaultTo: boolean): boolean => {
-		const value = process.env[key];
 		switch (value) {
 			case 'true':
 				return true;
@@ -133,7 +127,6 @@ function envBuilder(key: string, description?: string) {
 		}
 	};
 	const number = (defaultTo: number): number => {
-		const value = process.env[key];
 		if (value === undefined) {
 			return defaultTo;
 		}
@@ -145,7 +138,6 @@ function envBuilder(key: string, description?: string) {
 	};
 
 	function string(defaultTo: string): string {
-		const value = process.env[key];
 		return value === undefined ? defaultTo : value;
 	}
 
@@ -155,7 +147,7 @@ function envBuilder(key: string, description?: string) {
 	 * @returns {boolean}
 	 */
 	function matches(expected?: string): boolean {
-		return expected === process.env[key];
+		return expected === value;
 	}
 
 	const _this = () => ({
@@ -171,5 +163,63 @@ function envBuilder(key: string, description?: string) {
 	return _this();
 }
 
-const env = envBuilder;
+/**
+ * envArray allows for an array of environment objects to retrieved from the .env file,
+ * for example a list of users defined like:
+ *
+ * ```
+ * USERS_0_NAME
+ * USERS_0_EMAIL
+ * USERS_1_NAME
+ * USERS_1_EMAIL
+ * ```
+ *
+ * You can use this method to retrieve a map of users that you can use the valueValidator on.
+ *
+ * Example:
+ *
+ * ```ts
+ * const users = envArray('USERS').map(envObject => ({
+ * 	name: envObject('NAME').string('Anonymous'),
+ * 	email: envObject('EMAIL').required().string()
+ * }));
+ * ```
+ *
+ * Results in an array of 2 objects of type ({name: string, email: string}). This will also throw an error if a user
+ * is provided in the .env file that is missing an email address.
+ *
+ * @param {string} key path of
+ * @returns
+ */
+export function envArray(key: string) {
+	// Regex to match key_[index][nextKey]
+	const arrayRegex = new RegExp(`^${key}_(\\d+)_(\\w*)`);
+
+	const arrayOfObjects = Object.entries(process.env)
+		.map<[RegExpMatchArray | null, string | undefined]>((entry) => [entry[0].match(arrayRegex), entry[1]])
+		.filter((entry): entry is [RegExpMatchArray, string | undefined] => entry[0] !== null)
+		.map((entry) => {
+			const index = entry[0][1]; //first match group is index
+			const nextKey = entry[0][2];
+			const value = entry[1];
+			return { index, value, nextKey };
+		})
+		.reduce<Record<string, Record<string, string | undefined>>>((acc, entry) => {
+			if (!acc[entry.index]) {
+				acc[entry.index] = {};
+			}
+			acc[entry.index][entry.nextKey] = entry.value;
+			return acc;
+		}, {});
+
+	const output = Object.values(arrayOfObjects).map(
+		(envObject) => (key: string, description?: string) => valueValidator({ key, description, value: envObject[key] }),
+	);
+
+	return output;
+}
+
+const env = (key: string, description?: string) => {
+	return valueValidator({ key, description, value: process.env[key] });
+};
 export default env;
