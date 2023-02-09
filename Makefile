@@ -16,3 +16,6 @@ up:
 
 down:
 	docker-compose down
+
+nuke:
+	docker-compose rm -s -v

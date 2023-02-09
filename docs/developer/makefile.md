@@ -39,3 +39,5 @@ Start only the Kafka related containers:
 * Zookeper
 * Broker
 
+#### `make nuke`
+Stops all running containers, removes those containers and all volumes. If you run this, you will lose all your stored dev data. This is helpful when you have pulled updates from upstream that include new versions of docker dependencies or new init scripts with additonal seed data for your containers, since removing all temp volumes will cause them to be recreated on your next docker-compose run using the updated init scripts.

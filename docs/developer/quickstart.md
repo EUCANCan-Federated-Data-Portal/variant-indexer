@@ -20,3 +20,14 @@ When the application is run using the `debug` script, Node opens a port for a de
 With the app running,  open the command palette with `Cmd+Shift+P` (Windows `Ctl+Shift+P`). Search for and select the command `Debug: Attach to Node Process`, the debugger should connect to the running process.
 
 You can also configure VS Code to automatically connect to Node applications when they are running. In the VS Code settings look for `Debug › JavaScript: Auto Attach Filter` and change this to value.
+
+## Required Connections
+
+When the server starts, required connections are checked and if they fail an error is thrown crashing the application. In order for the application to start it must successfully connect to:
+
+* Elasticsearch
+* Ego (unless FEATURE_DEV_AUTH_BYPASS=true to skip auth checks in dev)
+
+## Feature Flags
+
+Some functionality of the application is placed behind Feature Flags. These are enabled in the `.env` file. There is a section in the template that includes all available flags. Review the features you want to enable in the [Config](./config.md#feature-flags) docs.
