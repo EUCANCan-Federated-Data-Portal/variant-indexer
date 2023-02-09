@@ -21,19 +21,20 @@ import { createLogger, LoggerOptions, transports, format } from 'winston';
 import config from './config';
 import { unknownToString } from './utils/stringUtils';
 
-const APP_NAME = process.env.APP_NAME || 'SchemaMigrator';
+const APP_NAME = config.server.appName;
 
 const { combine, timestamp, colorize, printf } = format;
 
-const isProduction = config.env.isProduction;
+const { isProduction } = config.env;
 const logLevel = config.logs.level;
 
+/* ===== Transports ===== */
 const consoleTransport = new transports.Console({
 	level: isProduction ? logLevel : 'debug',
 });
-
 const debugFileTransport = new transports.File({ filename: 'debug.log', level: 'debug' });
 
+/* ===== Config ===== */
 const options: LoggerOptions = {
 	silent: config.env.isTest,
 	format: combine(
@@ -50,18 +51,17 @@ if (process.env.NODE_ENV !== 'production') {
 	logger.debug(`[${APP_NAME}.Logger] Logging initialized at debug level`);
 }
 
-export type LogPartialMessage = string | number | boolean | object | unknown;
 const Logger = (...service: string[]) => {
-	const buildServiceMessage = (...messages: LogPartialMessage[]) => {
+	const buildServiceMessage = (...messages: any[]) => {
 		const strings: string[] = messages.map(unknownToString);
 		return `[${[APP_NAME, ...service].join('.')}] ${strings.join(' - ')}`;
 	};
 	return {
-		debug: (...messages: LogPartialMessage[]) => logger.debug(buildServiceMessage(...messages)),
-		info: (...messages: LogPartialMessage[]) => logger.info(buildServiceMessage(...messages)),
-		warn: (...messages: LogPartialMessage[]) => logger.warn(buildServiceMessage(...messages)),
-		error: (...messages: LogPartialMessage[]) => logger.error(buildServiceMessage(...messages)),
-		log: (level: LogLevel, ...messages: LogPartialMessage[]) => {
+		debug: (...messages: any[]) => logger.debug(buildServiceMessage(...messages)),
+		info: (...messages: any[]) => logger.info(buildServiceMessage(...messages)),
+		warn: (...messages: any[]) => logger.warn(buildServiceMessage(...messages)),
+		error: (...messages: any[]) => logger.error(buildServiceMessage(...messages)),
+		log: (level: LogLevel, ...messages: any[]) => {
 			const message = buildServiceMessage(...messages);
 			switch (level) {
 				case LogLevel.DEBUG:
