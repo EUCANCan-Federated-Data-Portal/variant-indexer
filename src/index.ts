@@ -22,23 +22,42 @@ import config from './config';
 import getServer from './server';
 import * as kafka from './external/kafka';
 import * as ego from './external/ego';
+import * as variantService from './services/variant';
 
 const logger = Logger('Main');
 
 const errorTypes = ['unhandledRejection', 'uncaughtException'];
 const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 
+const enabledFeatures = Object.entries(config.features)
+	.filter(([_key, value]) => value)
+	.map(([key, _value]) => key);
+
+logger.info(`Server starting with the following features enabled`, enabledFeatures);
+logger.info(`Repositories`, ...config.repositories.map((repo) => repo.code));
+
+config.features.authBypass && logger.warn(`AUTH IS DISABLED FOR DEVELOPMENT PURPOSES`);
+
 (async () => {
 	/*
 		INITIALIZE EXTERNAL DEPENDENCIES
 		- kafka
 		- ego
+		- elasticsearch
+			- create placeholder indices
+		Note: These methods throw errors that are not caught and this is intentional.
+		If the connections fail then the server will stop. This prevents the server from running
+		while connections are failing
 	 */
 
 	// Not waiting for kafka, it is slow to start. It will throw errors if connections fail.
-	kafka.setup();
+	config.features.kafka && kafka.setup();
 
-	await ego.getEgoToken();
+	// Ensure connection to ego. This request will throw an error if connection fails.
+	!config.features.authBypass && (await ego.getPublicKey());
+
+	// Create Variant Index if it doesn't exist
+	variantService.initializeIndex();
 
 	/*
 		START EXPRESS WEB SERVER
@@ -46,8 +65,9 @@ const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 	const server = await getServer();
 	server.listen(config.server.port, () => {
 		logger.info(`Web server started, listening on`, config.server.port);
+		logger.info(`Application environment set as: ${process.env.NODE_ENV}`);
 		if (config.env.isDev) {
-			logger.info(`Swagger is available at http://localhost:${config.server.port}/v1/api-docs`);
+			logger.info(`Swagger is available at http://localhost:${config.server.port}/v1/api-docs/`);
 		}
 	});
 })();
@@ -60,7 +80,7 @@ errorTypes.map((type) => {
 			console.log(e);
 
 			// Terminate any connections, as required
-			await kafka.disconnect();
+			config.features.kafka && (await kafka.disconnect());
 
 			process.exit(0);
 		} catch (_) {
@@ -73,7 +93,7 @@ signalTraps.map((type) => {
 	process.once(type as any, async () => {
 		try {
 			// Terminate any connections, as required
-			await kafka.disconnect();
+			config.features.kafka && (await kafka.disconnect());
 		} finally {
 			process.kill(process.pid, type);
 		}

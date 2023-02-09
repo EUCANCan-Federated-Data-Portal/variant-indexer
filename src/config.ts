@@ -18,7 +18,9 @@
  */
 import npmPackage from '../package.json';
 import { KafkaConsumerConfiguration } from './external/kafka/types';
-import env from './utils/envUtils';
+import Repository from './types/Repository';
+import { failure, Result, success } from './types/Result';
+import env, { envArray } from './utils/envUtils';
 
 const songConsumer: KafkaConsumerConfiguration = {
 	topic: env('KAFKA_TOPIC_SONG').string('song_analysis'),
@@ -31,8 +33,25 @@ const songConsumer: KafkaConsumerConfiguration = {
 		: undefined,
 };
 
+const repositories: Repository[] = envArray('REPOSITORIES').map((envObject) => ({
+	code: envObject('CODE').required().string(),
+	country: envObject('COUNTRY').required().string(),
+	name: envObject('NAME').required().string(),
+	organization: envObject('ORGANIZATION').required().string(),
+	scoreUrl: envObject('SCORE').required().string(),
+	songUrl: envObject('SONG').required().string(),
+}));
+
+process.env.NODE_ENV = process.env.NODE_ENV === undefined ? 'development' : process.env.NODE_ENV;
 const isProduction = env('NODE_ENV').matches('production');
 const isTest = env('TEST_MODE').boolean(false);
+
+const esAuthEnabled = env('ES_AUTH_ENABLED').boolean(false);
+
+const featureDevAuthBypass = env('FEATURE_DEV_AUTH_BYPASS').boolean(false);
+const featureKafkaEnabled = env('FEATURE_KAFKA_ENABLED').boolean(false);
+const featureSongLegacy = env('FEATURE_LEGACY_SONG').boolean(false);
+
 const config = {
 	env: {
 		isProduction,
@@ -48,6 +67,7 @@ const config = {
 				secret: env('EGO_CLIENT_SECRET').required().string(),
 			},
 		},
+		policy: env('EGO_AUTH_POLICY').string('INDEXER'),
 	},
 	db: {
 		host: env('PG_HOST').required().string(),
@@ -57,15 +77,28 @@ const config = {
 		db: env('PG_DB').required().string(),
 	},
 	es: {
-		host: '',
-		user: '',
-		pass: '',
+		authEnabled: esAuthEnabled,
+		host: env('ES_HOST').string(''),
+		user: esAuthEnabled ? env('ES_USER').required().string() : '',
+		pass: esAuthEnabled ? env('ES_PASSWORD').required().string() : '',
+		indices: {
+			variants: {
+				name: env('ES_VARIANT_CENTRIC_INDEX').string('variant_centric'),
+			},
+		},
+	},
+	features: {
+		authBypass: featureDevAuthBypass,
+		kafka: featureKafkaEnabled,
+		songLegacy: featureSongLegacy,
 	},
 	logs: {
 		level: env('LOG_LEVEL').options(['debug', 'info', 'warning', 'error']).string('info'), // log level used in deployed app
 	},
 	kafka: {
-		brokers: [env('KAFKA_BROKER').required().string()] as string[],
+		brokers: featureKafkaEnabled
+			? env('KAFKA_BROKER', "Kafka Broker URL, required if FEATURE_KAFKA_ENABLED is 'true'").required().string()
+			: '',
 		clientId: env('KAFKA_CLIENT_ID').string('indexer'),
 		namespace: env('KAFKA_NAMESPACE').string('indexer'),
 		consumers: {
@@ -75,9 +108,20 @@ const config = {
 			indexing: { topic: env('KAFKA_INDEXING_TOPIC') },
 		},
 	},
+	repositories,
 	server: {
+		appName: env('APP_NAME').string('Indexer'),
 		port: env('SERVER_PORT').number(3344),
 	},
+	song: {
+		useLegacy: featureSongLegacy,
+		pageSize: env('SONG_PAGE_SIZE').number(50),
+	},
 } as const;
+
+export const getRepo = (code: string): Result<Repository> => {
+	const repo = config.repositories.find((repo) => repo.code === code);
+	return repo ? success(repo) : failure(`No repository configured with code ${code}`);
+};
 
 export default config;
