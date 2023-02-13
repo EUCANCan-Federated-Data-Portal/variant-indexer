@@ -19,6 +19,8 @@
 
 import { Router } from 'express';
 import config from '../../config';
+import { authorizeRead } from '../../middleware/authMiddleware';
+
 /**
  * @openapi
  * tags:
@@ -51,6 +53,28 @@ router.get('/', (_req, res) => {
 		},
 		uptime: new Date().valueOf() - startTime.valueOf(),
 		version: config.env.version,
+	});
+});
+
+/**
+ * Respond with 200OK and some server status information.
+ *
+ * @openapi
+ * /v1/status/repos:
+ *   get:
+ *     tags:
+ *       - Status
+ *     name: Health Check
+ *     description: Ping!
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: JSON with list of repositories
+ */
+router.get('/repos', authorizeRead, (_req, res) => {
+	return res.json({
+		repos: config.repositories.map((repo) => ({ code: repo.code, name: repo.name })),
 	});
 });
 
