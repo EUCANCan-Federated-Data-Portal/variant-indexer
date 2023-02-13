@@ -18,15 +18,62 @@
  */
 
 import { Client } from '@elastic/elasticsearch';
-
+import { IndicesIndexSettings, MappingTypeMapping } from '@elastic/elasticsearch/api/types';
 import config from '../../config';
+import Logger from '../../logger';
+const logger = Logger('Elasticsearch');
 
+logger.debug({
+	node: config.es.host,
+
+	auth: config.es.authEnabled
+		? {
+				username: config.es.user ? '********' : undefined,
+				password: config.es.pass ? '********' : undefined,
+		  }
+		: undefined,
+});
 const esClient = new Client({
 	node: config.es.host,
-	auth: {
-		username: config.es.user,
-		password: config.es.pass,
-	},
+	// Transport: TransportIncludingSubPath,
+	auth: config.es.authEnabled
+		? {
+				username: config.es.user,
+				password: config.es.pass,
+		  }
+		: undefined,
 });
+
+export const checkIndexExists = async (index: string): Promise<boolean> => {
+	try {
+		await esClient.indices.get({
+			index,
+		});
+		logger.debug(index, `Index exists`);
+		return true;
+	} catch (e) {
+		if (e instanceof Error && e.name === 'ResponseError' && e.message.startsWith('index_not_found_exception')) {
+			logger.debug(index, `Index doesn't exist`);
+			return false;
+		}
+
+		logger.error(`Error checking es for index ${index}`, e);
+		throw e;
+	}
+};
+
+export const createIndex = async (
+	name: string,
+	options: { mappings?: MappingTypeMapping; settings?: IndicesIndexSettings } = {},
+): Promise<void> => {
+	esClient.indices.create({
+		index: name,
+		body: {
+			mappings: options.mappings,
+			settings: options.settings,
+		},
+	});
+	logger.info(name, `Index created`);
+};
 
 export default esClient;
