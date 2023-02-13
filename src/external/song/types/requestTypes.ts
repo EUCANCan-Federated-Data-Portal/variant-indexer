@@ -18,7 +18,18 @@
  */
 
 import { z as zod } from 'zod';
-import { Analysis } from './dataTypes';
+import { Analysis, AnalysisState } from './dataTypes';
+
+/* ===== Request Input Structures ===== */
+export type AnalysisFilters = {
+	study: string;
+	states: AnalysisState[];
+};
+
+export type RequestPagination = {
+	limit?: number;
+	offset?: number;
+};
 
 /* ===== Common Response Structures ===== */
 export const PagedResponse = zod.object({
@@ -42,9 +53,12 @@ export type SongResponsesGetAllStudies = zod.infer<typeof SongResponsesGetAllStu
 export const SongResponseGetAnalysis = Analysis;
 export type SongResponseGetAnalysis = zod.infer<typeof SongResponseGetAnalysis>;
 
+export const SongResponsGetAllAnalyses = zod.array(Analysis);
+export type SongResponsGetAllAnalyses = zod.infer<typeof SongResponsGetAllAnalyses>;
+
 export const SongResponseGetPagedAnalyses = zod
 	.object({
 		analyses: zod.array(Analysis),
 	})
 	.merge(PagedResponse);
-export type PagedAnalysisResponse = zod.infer<typeof SongResponseGetPagedAnalyses>;
+export type SongResponseGetPagedAnalyses = zod.infer<typeof SongResponseGetPagedAnalyses>;

@@ -19,7 +19,7 @@
 
 // Export all types
 export * from './types/dataTypes';
-export * from './types/responseTypes';
+export * from './types/requestTypes';
 
 // Export SongClient as default
 import SongClient from './SongClient';
