@@ -1,5 +1,5 @@
 # EuCanCan Indexer Spike
-Intended as the foundation for an Overture Indexer application (name TBD or Maestro 2.0).
+Proof of concept multi-centric indexer
 
 This application automates data indexing into ElasticSearch from Overture data sources ([Song](https://github.com/overture-stack/song) and [Score](https://github.com/overture-stack/score)), preparing mutliple entity-centric indices. The entities managed by this indexer, and the source of their data, include:
 

@@ -18,12 +18,14 @@
  */
 
 import { Router } from 'express';
-import swaggerRouter from './swagger';
 import healthRouter from './status';
+import swaggerRouter from './swagger';
+import updateRouter from './update';
 
 const router = Router();
 
 router.use('/api-docs', swaggerRouter);
 router.use('/status', healthRouter);
+router.use('/update', updateRouter);
 
 export default router;
