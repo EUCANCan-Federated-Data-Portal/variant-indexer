@@ -93,7 +93,7 @@ const config = {
 		songLegacy: featureSongLegacy,
 	},
 	logs: {
-		level: env('LOG_LEVEL').options(['debug', 'info', 'warning', 'error']).string('info'), // log level used in deployed app
+		level: env('LOG_LEVEL').options(['debug', 'info', 'warn', 'error']).string('info'), // log level used in deployed app
 	},
 	kafka: {
 		brokers: featureKafkaEnabled
