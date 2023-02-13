@@ -17,44 +17,30 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import express from 'express';
-import type { Express } from 'express';
+import { Request } from 'express';
+import morgan, { StreamOptions } from 'morgan';
+import config from '../config';
+import type { Logger } from '../logger';
 
-import v1Router from './routes/v1';
-import config from './config';
+export default function (logger: Logger) {
+	// direct morgan http logs to the provided logger
+	const stream: StreamOptions = {
+		// Use the http severity
+		write: (message) => logger.info(message),
+	};
 
-import requestLogger from './middleware/requestLogger';
-import errorHandler from './middleware/errorHandler';
+	// conditions for morgan to skip http request log
+	const skip = (req: Request): boolean => {
+		// Filter out all requests for dependencies of the swagger docs
+		const isSwaggerDependency = req.originalUrl.match(/api-docs\/.+/);
 
-import Logger from './logger';
-const logger = Logger('Server');
+		// Filter out requests for favicon
+		const isFavicon = req.originalUrl === '/favicon.ico';
 
-let server: Express;
+		// if any of the checks are true, don't log:
+		return [config.env.isTest, isSwaggerDependency, isFavicon].some((i) => i);
+	};
 
-const createServer = async (): Promise<Express> => {
-	server = express();
-	server.use(express.json());
-
-	server.use(requestLogger(logger));
-
-	/**
-	 * PING!
-	 * Root path should return 200 OK
-	 */
-	server.get('/', (_req, res) => {
-		res.status(200).json({
-			swagger: { v1: '/v1/api-docs' },
-		});
-	});
-
-	// Add v1 Router
-	server.use('/v1', v1Router);
-
-	// Error handler must be added after routers!
-	server.use(errorHandler);
-
-	return server;
-};
-
-const getServer = async (): Promise<Express> => server || createServer();
-export default getServer;
+	const logFormat = ':method :url :status :res[content-length] - :response-time ms';
+	return morgan(logFormat, { stream, skip });
+}

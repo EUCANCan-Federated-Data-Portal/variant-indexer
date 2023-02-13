@@ -17,44 +17,42 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import express from 'express';
-import type { Express } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { unknownToString } from '../utils/stringUtils';
 
-import v1Router from './routes/v1';
-import config from './config';
-
-import requestLogger from './middleware/requestLogger';
-import errorHandler from './middleware/errorHandler';
-
-import Logger from './logger';
-const logger = Logger('Server');
-
-let server: Express;
-
-const createServer = async (): Promise<Express> => {
-	server = express();
-	server.use(express.json());
-
-	server.use(requestLogger(logger));
-
-	/**
-	 * PING!
-	 * Root path should return 200 OK
-	 */
-	server.get('/', (_req, res) => {
-		res.status(200).json({
-			swagger: { v1: '/v1/api-docs' },
-		});
-	});
-
-	// Add v1 Router
-	server.use('/v1', v1Router);
-
-	// Error handler must be added after routers!
-	server.use(errorHandler);
-
-	return server;
+/**
+ * Map of response status to send for different caugh error types
+ */
+const STATUS_MAP: Record<string, number> = {
+	// Ego Token Middleware thrown error names:
+	Forbidden: 403,
+	Unauthorized: 401,
 };
 
-const getServer = async (): Promise<Express> => server || createServer();
-export default getServer;
+/**
+ * Set default response for unhandled errors to be json instead of html.
+ * @param err
+ * @param _req
+ * @param res
+ * @param next
+ * @returns
+ */
+function errorHandler(err: unknown, _req: Request, res: Response, next: NextFunction): any {
+	if (res.headersSent) {
+		return next(err);
+	}
+
+	const defaultName = 'ServerError';
+	const error = err instanceof Error ? err.name || defaultName : defaultName;
+
+	const status = STATUS_MAP[error] || 500; // status from map, otherwise default to 500 for server error
+
+	const message = unknownToString(err);
+
+	res.status(status).json({ error, message });
+
+	// Pass the error to any other error handlers, including express default.
+	next(err);
+}
+
+export default errorHandler;
